@@ -7,13 +7,13 @@
     <title>Document</title>
 </head>
 <body>
+    <h1 id="next"></h1>
     <script>
         
 
 
     </script>
-    <canvas id="canvas" width="500px" height="500px" style="background-color: antiquewhite;"></canvas>
-    <script type="text/javascript" src="TetrisBase.js"></script>
+    <canvas id="canvas" width="500px" height="800px" style="background-color: antiquewhite;"></canvas>    
     <script type="text/javascript" src="Brick.js"></script>
     <script>
         var canvas = document.getElementById("canvas");
@@ -21,23 +21,138 @@
         var field = new FieldShape(ctx, canvas);
         
         var brick = new BrickShape(ctx, canvas);
-        console.log(field.widthCnt);
         
-        field.drawFieldBricks();
-        brick.drawBrickShape(parseInt(field.widthCnt / 2) * brick.componentBrickWidth, 0);
+        
+        field.drawFieldBricks(0, 0);
+        brick.initializeBrickInfo(parseInt(field.widthCnt / 2) * brick.componentBrickWidth , 0);
+        brick.initDrawBrickShape();
+
+        var left = false;
+        var right = false;
+        var down = false;
+        var roate = false;
+        var init = false;
 
         function draw(){
+            
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            field.drawFieldBricks();
-            if(brick.collisionDetection(field.shapeArr)){ //충돌감지.
-                brick.moveDownBrickShape();
-            }else{//충돌 감지 X
+            field.redrawFieldBricks();
 
-            }
+            if(brick.collisionDetection(field.shapeArr, "down")){ //충돌감지.
                 
+                field.update(brick.shape.shapeArr, brick.rowCnt, brick.colCnt);
+                field.redrawFieldBricks();
+
+                
+                brick.resetBrickShape();
+                if(brick.collisionDetection(field.shapeArr, "down")){
+                    clearInterval(a);
+                    alert("zzz");
+                }else{                    
+                    brick.initDrawBrickShape();                    
+                    updateNext();
+                }
+                
+                
+                
+            }else{//충돌 감지 X                
+                init = false;
+                brick.moveDownBrickShape();                
+                brick.drawBrickShape();
+            }
         }
 
-        setInterval(draw, 1000);
+        function updateNext(){
+            var h = document.getElementById("next");
+            h.innerText = brick.getNextShape();
+        }
+
+
+        function keydown(e){
+            if (e.keyCode == '38') {
+                // up arrow
+                
+            }
+            else if (e.keyCode == '40') {
+                // down arrow
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                field.redrawFieldBricks();
+                
+                if(brick.collisionDetection(field.shapeArr, "down")){ //충돌감지.                    
+                    field.update(brick.shape.shapeArr, brick.rowCnt, brick.colCnt);
+                    field.redrawFieldBricks();
+
+                    brick.resetBrickShape();                    
+                    brick.initDrawBrickShape();
+                    updateNext();
+                }else{//충돌 감지 X
+                    brick.moveDownBrickShape();   
+                    brick.drawBrickShape();             
+                    // brick.drawBrickShape();
+                }
+                
+            }
+            else if (e.keyCode == '37') {
+                // left arrow
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                field.redrawFieldBricks();
+                if(brick.collisionDetection(field.shapeArr, "left")){ //충돌감지.                    
+                    brick.drawBrickShape();
+                }else{//충돌 감지 X
+                    brick.moveLeftBrickShape();
+                    brick.drawBrickShape();
+                }
+            }
+            else if (e.keyCode == '39') {
+                // right arrow                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                field.redrawFieldBricks();
+                if(brick.collisionDetection(field.shapeArr, "right")){ //충돌감지.                    
+                    brick.drawBrickShape();
+                }else{//충돌 감지 X
+                    brick.moveRightBrickShape();
+                    brick.drawBrickShape();
+                }
+            }
+        }
+
+        function keyup(e){
+            if (e.keyCode == '38') {
+                // up arrow
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                field.redrawFieldBricks();                
+                if(brick.collisionDetection(field.shapeArr, "rotate")){ //충돌감지.                    
+                    
+                }else{//충돌 감지 X
+                    brick.brickRoate();
+                }
+                brick.drawBrickShape();
+            }
+            else if (e.keyCode == '40') {
+                // down arrow
+            }
+            else if (e.keyCode == '37') {
+                // left arrow
+            }
+            else if (e.keyCode == '39') {
+                // right arrow                
+            }else if (e.keyCode == '81'){
+                //q
+                clearInterval(a);
+            }else if (e.keyCode == '87'){
+                //w
+                clearInterval(a);
+                a = setInterval(draw, 500);
+            }else if(e.keyCode == '82'){                
+                //r
+            }
+        }
+
+        document.addEventListener("keydown", keydown);
+        document.addEventListener("keyup", keyup);
+
+        var a = setInterval(draw, 1000);
+        
     </script>
 </body>
 </html>
