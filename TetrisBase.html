@@ -78,17 +78,11 @@
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 field.redrawFieldBricks();
                 
-                if(brick.collisionDetection(field.shapeArr, "down")){ //충돌감지.                    
-                    field.update(brick.shape.shapeArr, brick.rowCnt, brick.colCnt);
-                    field.redrawFieldBricks();
-
-                    brick.resetBrickShape();                    
-                    brick.initDrawBrickShape();
-                    updateNext();
-                }else{//충돌 감지 X
+                if(!brick.collisionDetection(field.shapeArr, "down")){ //충돌감지.X
                     brick.moveDownBrickShape();   
-                    brick.drawBrickShape();             
-                    // brick.drawBrickShape();
+                    brick.drawBrickShape();
+                }else{
+                    brick.drawBrickShape();
                 }
                 
             }
@@ -145,6 +139,17 @@
                 a = setInterval(draw, 500);
             }else if(e.keyCode == '82'){                
                 //r
+            
+                brick.gotoEnd(field.shapeArr);
+                console.log(brick.rowCnt, brick.colCnt);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                field.update(brick.shape.shapeArr, brick.rowCnt, brick.colCnt);
+                field.redrawFieldBricks();
+                    
+                brick.resetBrickShape();
+                brick.initDrawBrickShape();
+                updateNext();                    
             }
         }
 

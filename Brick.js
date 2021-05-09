@@ -58,6 +58,7 @@ class BrickShape extends Shape{
         super(ctx);
         this.canvas = canvas;
         // this.shapeArr = create2DArray(this.rows, this.cols);
+        // this.shapeTypeIdx = ["shapeA", "shapeA2"];
         this.shapeTypeIdx = ["shapeA", "shapeA2", "shapeB", "shapeC", "shapeD", "shapeD2", "shapeE"];
         this.posX = 0;
         this.posY = 0;
@@ -200,6 +201,7 @@ class BrickShape extends Shape{
 
     brickRoate(){
         this.shape.shapeArr = this.rotate_90(this.shape.shapeArr);
+        console.log("Rotate", this.shape.shapeArr);
     }
 
     resetBrickShape(){
@@ -230,23 +232,27 @@ class BrickShape extends Shape{
                     }else if(command == "right"){
                         if(realCol + 1 > fieldArr[0].length - 1 || fieldArr[realRow][realCol+1].status)
                             return true;
-                    }else if(command == "down"){        
+                    }else if(command == "down"){
                         
                         if(realRow + 1 > fieldArr.length - 1 || fieldArr[realRow+1][realCol].status)
                             return true;
                     }else if(command == "rotate"){                                                
                         //미래의 좌표
-                        if(this.shape.rows-1-r + this.colCnt <= -1){ //좌 충돌                            
+                        
+                        if(this.shape.rows-1-r + this.colCnt <= -1){ //좌 충돌                             
                             if(-1 - (this.shape.rows-1-r + this.colCnt) > 1){
                                 return true;
                             }
+                            
                             this.moveRightBrickShape();
                         }else if(this.shape.rows-1-r + this.colCnt >= fieldArr[0].length){ //우 충돌                            
+                            
                             if(this.shape.rows-1-r + this.colCnt -  fieldArr[0].length >= 1){
                                 return true;
                             }
+                            
                             this.moveLeftBrickShape();
-                        }else if(fieldRow + c > fieldArr.length - 1 || fieldArr[fieldRow + c][this.shape.rows-1-r + fieldCol].status){ //하단 충돌
+                        }else if(fieldRow + c > fieldArr.length - 1 || fieldArr[fieldRow + c][this.shape.rows-1-r + this.colCnt].status){ //하단 충돌
                             return true;
                         }
                         
@@ -254,12 +260,21 @@ class BrickShape extends Shape{
                 }
             }
         }
+        console.log("-------------------");
 
         return false;        
     }
 
     getNextShape(){
         return this.nextShape;
+    }
+
+    gotoEnd(fieldArr){
+        while(!this.collisionDetection(fieldArr, "down")){
+            this.moveDownBrickShape();
+        }
+        
+        return true;
     }
 }
 
@@ -411,6 +426,7 @@ class FieldShape extends Shape{
     }
 
     update(brickShapeArr, rowCnt, colCnt){
+        
         this.updating = true;
         
         rowCnt = rowCnt;
@@ -442,33 +458,52 @@ class FieldShape extends Shape{
             }
         }
         
-        if(fillCnt.length > 0)
+        if(fillCnt.length > 0){
+            console.log("지우기 시작");
             this.fillField(fillCnt);
+        }
         
         this.updating = false;
     }
 
     fillField(fillCnt){
         var moveCnt = 0;
-        for(var r=this.heightCnt - 1; r >= 0; r--){
-            for(var r2=r; r2>=0; r2--){
-                if(fillCnt.includes(r2)){
-                    moveCnt += 1;
-                }else{
-                    break;
-                }
+        for(var r= this.heightCnt - 1; r >= 0; r--){
+            if(fillCnt.includes(r)){
+                moveCnt += 1;
+                continue;
             }
 
-            if(moveCnt > 0 && r-moveCnt >= 0){
+            if(moveCnt > 0){
                 for(var c=0; c<this.widthCnt; c++){                    
-                    this.shapeArr[r][c].status = this.shapeArr[r- moveCnt][c].status;
-                    this.shapeArr[r][c].color = this.shapeArr[r- moveCnt][c].color;
+                    this.shapeArr[r + moveCnt][c].status = this.shapeArr[r][c].status;
+                    this.shapeArr[r + moveCnt][c].color = this.shapeArr[r][c].color;
 
-                    this.shapeArr[r- moveCnt][c].status = false;
-                    this.shapeArr[r- moveCnt][c].color = this.baseBgColor;
+                    this.shapeArr[r][c].status = false;
+                    this.shapeArr[r][c].color = this.baseBgColor;
                 }
             }
         }
+
+        // for(var r=this.heightCnt - 1; r >= 0; r--){
+        //     for(var r2=r; r2>=0; r2--){
+        //         if(fillCnt.includes(r2)){
+        //             moveCnt += 1;
+        //         }else{
+        //             break;
+        //         }
+        //     }
+
+        //     if(moveCnt > 0 && r-moveCnt >= 0){
+        //         for(var c=0; c<this.widthCnt; c++){                    
+        //             this.shapeArr[r][c].status = this.shapeArr[r- moveCnt][c].status;
+        //             this.shapeArr[r][c].color = this.shapeArr[r- moveCnt][c].color;
+
+        //             this.shapeArr[r- moveCnt][c].status = false;
+        //             this.shapeArr[r- moveCnt][c].color = this.baseBgColor;
+        //         }
+        //     }
+        // }
         
     }
 
