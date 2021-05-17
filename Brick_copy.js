@@ -11,7 +11,11 @@ function deepCopy(o) {
 }
 
 
+const playerComponentWidth = 30;
+const playerComponentHeight = 30;
 
+const enemyComponentWidth = 10;
+const enemyComponentHeight = 10;
 
 
 function create2DArray(rows, columns, color) {
@@ -48,14 +52,20 @@ class Shape{
 
 class BrickShape {    
     
-    constructor(ctx, shape){
+    constructor(ctx, width, height){
         this.ctx = ctx;
         // this.shapeTypeIdx = ["shapeA", "shapeA2", "shapeB", "shapeC", "shapeD", "shapeD2", "shapeE"];
-        this.shapeTypeIdx = ["shapeA"];        
-        this.shape = shape;
+        this.shapeTypeIdx = ["shapeA"];
+
+        this.componentWidth = width;
+        this.componentHeight = height;
+
+        this.shape = this.createBrickShape();       
+        this.nextShape = this.createBrickShape(); 
+        
         // this.currentShape = this.shapeTypeIdx[parseInt(Math.random() * this.shapeTypeIdx.length)];
     }
-
+    
     initializeBrickShape(posX, posY){
         this.posX = posX;
         this.posY = posY;
@@ -131,13 +141,8 @@ class BrickShape {
     }
 
     resetBrickShape(){
-        this.currentShape = this.nextShape;
-        this.nextShape = this.shapeTypeIdx[parseInt(Math.random() * this.shapeTypeIdx.length)];
-
-        this.colCnt = this.originCnt.colCnt;
-        this.rowCnt = this.originCnt.rowCnt;
-        
-        this.createShapeObj(this.currentShape);
+        this.shape = this.nextShape;
+        this.nextShape = this.createBrickShape();
     }
 
 
@@ -185,19 +190,52 @@ class BrickShape {
             }
         }        
     }
+
+    createBrickShape(){
+        var max = 256;
+        var red = Math.random() * max;
+        var green = Math.random() * max;
+        var blue = Math.random() * max;
+
+        var color = String.format("rgb({0}, {1}, {2})", red, green, blue);
+        
+        
+        return this.createShapeObj(this.shapeTypeIdx[parseInt(Math.random() * this.shapeTypeIdx.length)], color);
+    }
+
+    createShapeObj(shapeType, color){        
+        var playShape = null;
+        if(shapeType == "shapeA"){            
+            console.log("dfs",this.componentWidth);
+            playShape = new ShapeA(color, this.componentWidth, this.componentHeight);
+
+        }else if(shapeType == "shapeA2"){
+            playShape = new ShapeA2(color, this.componentWidth, this.componentHeight);
+        }else if(shapeType == "shapeB"){
+            playShape = new ShapeB(color, this.componentWidth, this.componentHeight);
+        }else if(shapeType == "shapeC"){
+            playShape = new ShapeC(color, this.componentWidth, this.componentHeight);
+        }else if(shapeType == "shapeD2"){
+            playShape = new ShapeD2(color, this.componentWidth, this.componentHeight);
+        }else if(shapeType == "shapeD"){
+            playShape = new ShapeD(color, this.componentWidth, this.componentHeight);
+        }else if(shapeType == "shapeE"){
+            playShape = new ShapeE(color, this.componentWidth, this.componentHeight);
+        }
+
+        return playShape;
+    }
     
 }
 
 class ShapeA extends Shape{ //L
     
     
-    constructor(color, width, height){
+    constructor(color){
         super();
-        this.width = width;
-        this.height = height
         this.color = color;
         this.rows = 3;
-        this.cols = 3;        
+        this.cols = 3;
         this.shapeIdx = [0, 3, 4, 5];
         this.shapeType = "ShapeA";
         this.shapeArr = create2DArray(this.rows, this.cols, this.color);
@@ -222,7 +260,7 @@ class ShapeA extends Shape{ //L
         for(var r=0; r<this.rows; r++){
             for(var c=0; c<this.cols; c++){
                 if(this.shapeArr[r][c].status){
-                    console.log(startX , c, this.width);
+                    console.log("zzz", startX , c, this.width);
                     ctx.beginPath();
                     ctx.rect(startX + c * this.width, startY + r * this.height, this.width, this.height);
                     ctx.fillStyle=this.color;
@@ -497,6 +535,10 @@ class FieldShape {
         return this.updating = 0;
     }
 
+    resetBrickShape(){
+        this.brickShape.resetBrickShape();
+    }
+
     collisionDetection(command){
         console.log(this.shapeArr);
         for(var r=0; r<this.brickShape.shape.rows; r++){
@@ -548,6 +590,8 @@ class FieldShape {
         return false;        
     }
 
+    
+
     clearArea(){
         this.ctx.clearRect(this.drawPosX, this.drawPosY, this.width, this.height);
     }
@@ -556,72 +600,34 @@ class FieldShape {
 class GameController{
     constructor(ctx){ 
         // this.shapeTypeIdx = ["shapeA", "shapeA2", "shapeB", "shapeC", "shapeD", "shapeD2", "shapeE"];
-        this.shapeTypeIdx = ["shapeA"];
+        
         this.playShapeComponentWidth = 30;
         this.playShapeComponentHeight = 30;        
 
-        this.playShape = this.createBrickShape();
-        this.playBrickShape = new BrickShape(ctx, this.playShape);
+        
+        this.playBrickShape = new BrickShape(ctx, this.playShapeComponentWidth, this.playShapeComponentHeight);
         this.field = new FieldShape(ctx, this.playBrickShape, this.playShapeComponentWidth, this.playShapeComponentHeight);
         this.field.initializeBrickInfo(0, 0);
     }
 
     start(){
-        setTimeout(function(){game.update()}, 1000);
+        game.update();
     }
 
     update(){
-        
         this.field.clearArea();
         this.field.drawField();
 
         if(this.field.collisionDetection("down")){ //충돌감지.
-
-            this.field.update();            
-            this.field.drawField();            
-            this.field.brick.resetBrickShape();
-            
-            
+            this.field.update();
+            this.field.drawField();
+            this.field.resetBrickShape();
         }else{//충돌 감지 X
-            this.field.downMoveShape();                
+            this.field.downMoveShape();
         }
 
         this.field.drawMoveShape();
 
-        setTimeout(function(){game.update()}, 10);
-    }
-
-    createBrickShape(){
-        var max = 256;
-        var red = Math.random() * max;
-        var green = Math.random() * max;
-        var blue = Math.random() * max;
-
-        var color = String.format("rgb({0}, {1}, {2})", red, green, blue);
-        
-        
-        return this.createShapeObj(this.shapeTypeIdx[parseInt(Math.random() * this.shapeTypeIdx.length)], color);
-    }
-
-    createShapeObj(shapeType, color){        
-        var playShape = null;
-        if(shapeType == "shapeA"){            
-            playShape = new ShapeA(color, this.playShapeComponentWidth, this.playShapeComponentHeight);
-
-        }else if(shapeType == "shapeA2"){
-            playShape = new ShapeA2(color, this.playShapeComponentWidth, this.playShapeComponentHeight);
-        }else if(shapeType == "shapeB"){
-            playShape = new ShapeB(color, this.playShapeComponentWidth, this.playShapeComponentHeight);
-        }else if(shapeType == "shapeC"){
-            playShape = new ShapeC(color, this.playShapeComponentWidth, this.playShapeComponentHeight);
-        }else if(shapeType == "shapeD2"){
-            playShape = new ShapeD2(color, this.playShapeComponentWidth, this.playShapeComponentHeight);
-        }else if(shapeType == "shapeD"){
-            playShape = new ShapeD(color, this.playShapeComponentWidth, this.playShapeComponentHeight);
-        }else if(shapeType == "shapeE"){
-            playShape = new ShapeE(color, this.playShapeComponentWidth, this.playShapeComponentHeight);
-        }
-
-        return playShape;
+        setTimeout(function(){game.update()}, 1000);
     }
 }
