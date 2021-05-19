@@ -81,6 +81,41 @@ class ShapeA extends Shape{
     }
 }
 
+class ShapeB extends Shape{
+    constructor(color, comWidth, comHeight){
+        super(color, [0, 3, 4, 5], 3, 3);
+        this.setComponentInfo(comWidth, comHeight);
+    }
+}
+
+class ShapeB2 extends Shape{
+    constructor(color, comWidth, comHeight){        
+        super(color, [2, 3, 4, 5], 3, 3);
+        this.setComponentInfo(comWidth, comHeight);
+    }
+}
+
+class ShapeC extends Shape{
+    constructor(color, comWidth, comHeight){        
+        super(color, [4,5,6,7], 4,4);
+        this.setComponentInfo(comWidth, comHeight);
+    }
+}
+
+class ShapeD extends Shape{
+    constructor(color, comWidth, comHeight){        
+        super(color, [0, 1, 4, 5], 3,3);
+        this.setComponentInfo(comWidth, comHeight);
+    }
+}
+
+class ShapeD2 extends Shape{
+    constructor(color, comWidth, comHeight){        
+        super(color, [1,2,3,4], 3,3);
+        this.setComponentInfo(comWidth, comHeight);
+    }
+}
+
 class ShapeContoller{
 
     constructor(ctx, shape){
@@ -167,8 +202,8 @@ class PlayField extends Shape{
         this.startY = startY;
         this.ctx = ctx;
         this.shapeController = shapeController;
-        this.rowCnt = -1;
-        this.colCnt = parseInt(this.cols / 2) - 1;
+        this.rowCnt = -3;
+        this.colCnt = parseInt(this.cols / 2) - 1;        
         this.setComponentInfo(comWidth, comHeight);
     }
 
@@ -193,7 +228,7 @@ class PlayField extends Shape{
 
     collisionDetection(command){
         var shape = this.shapeController.getShape();
-
+        console.log(this.rowCnt, this.colCnt, this.shapeController.shape.shapeArr);
         for(var r=0; r<shape.rows; r++){
             var fieldRow = this.rowCnt;
             var fieldCol = this.colCnt;
@@ -203,15 +238,22 @@ class PlayField extends Shape{
                     var realCol = fieldCol + c;                                        
                     var realRow = fieldRow + r;
                     if(command == controlEnum.left){                                
-                        
+                        if(realRow < 0){
+                            continue;
+                        }
                         if(realCol - 1 < 0 || this.shapeArr[realRow][realCol -1].status){                            
                             return true;
                         }
                     }else if(command == controlEnum.right){
+                        if(realRow < 0){
+                            continue;
+                        }
                         if(realCol + 1 > this.shapeArr[0].length - 1 || this.shapeArr[realRow][realCol+1].status)
                             return true;
                     }else if(command == controlEnum.down){
-                        
+                        if(realRow + 1 < 0){
+                            continue;
+                        }
                         if(realRow + 1 > this.shapeArr.length - 1 || this.shapeArr[realRow+1][realCol].status)
                             return true;
                     }else if(command == controlEnum.rotate){
@@ -230,7 +272,10 @@ class PlayField extends Shape{
                             }
                             
                             this.sendCMD(controlEnum.left);
-                        }else if(fieldRow + c > this.shapeArr.length - 1 || this.shapeArr[fieldRow + c][shape.rows-1-r + this.colCnt].status){ //하단 충돌
+                        }else if(fieldRow + c < 0){
+                            continue;
+                        }
+                        else if(fieldRow + c > this.shapeArr.length - 1 || this.shapeArr[fieldRow + c][shape.rows-1-r + this.colCnt].status){ //하단 충돌
                             return true;
                         }
                         
@@ -273,7 +318,7 @@ class PlayField extends Shape{
                 fillCnt.push(r);
             }
         }
-        console.log(fillCnt);
+        
         if(fillCnt.length > 0){
             
             this.fillField(fillCnt);
@@ -320,16 +365,14 @@ class PlayField extends Shape{
         }else{
             return false;
         }
-
-
     }
 
     clearArea(){
-        this.ctx.clearRect(this.startX, this.startY, this.rows * this.comHeight, this.cols * this.comWidth);
+        this.ctx.clearRect(this.startX, this.startY, this.cols * this.comWidth, this.rows * this.comHeight );        
     }
 
     resetShape(shape){
-        this.rowCnt = 0;
+        this.rowCnt = -2;
         this.colCnt = parseInt(this.cols / 2) - 1;
         this.shapeController.setShape(shape);
     }
@@ -339,24 +382,112 @@ class PlayField extends Shape{
             this.shapeController.moveDownBrickShape();
         }
     }
+
+    getEndPosX(){
+        return this.startX + this.cols * this.comWidth;
+    }
+
+    getEndPosY(){
+        return this.startY + this.rows * this.comHeight;
+    }
+
+    getEnable(){
+        var shape = this.shapeController.getShape();
+        
+        for(var r=0; r<shape.rows; r++){
+            var fieldRow = this.rowCnt;
+            for(var c=0; c<shape.cols; c++){
+                if( shape.shapeArr[r][c].status){                                                        
+                    var realRow = fieldRow + r;
+                    if(realRow < 0){
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
 }
 
 class WaitingField extends Shape{
-    constructor(ctx){
-        this.shapes = [];
+
+    constructor(ctx, startX, startY, comWidth, comHeight, shapes){
+        super("white", [], 6, 4 * 4 + 1);
+        this.shapes = shapes;
+        this.startX = startX;
+        this.startY = startY;        
+        this.shapeMaxRows = 4;
+        this.ctx = ctx;        
+        this.setComponentInfo(comWidth, comHeight);
+        this.padding = 10;
     }
+
+    drawWaitingField(){
+        for(var r=0; r<this.rows; r++){
+            for(var c=0; c<this.cols; c++){
+                
+                this.ctx.beginPath();
+                this.ctx.rect(this.startX + c * this.comWidth, this.startY + r * this.comHeight, this.comWidth, this.comHeight);
+                this.ctx.fillStyle=this.shapeArr[r][c].color;
+                this.ctx.fill();                
+                this.ctx.closePath();
+                
+            }
+        }
+
+        this.drawShapes();
+    }
+    drawShapes(){
+        var startX = this.startX + this.comWidth;
+        var startY = this.startY + this.comHeight;
+        
+
+        for(var i=0; i<this.shapes.length; i++){
+            this.shapes[i].draw(this.ctx, startX, startY + this.comHeight * this.shapeMaxRows * i + this.padding);
+            // this.shapes[i].draw(this.ctx, 360, startY + this.comHeight * (this.shapeMaxRows + 1) * i);
+        }
+    }
+
+    setComponentInfo(comWidth, comHeight){
+        this.comWidth = comWidth;
+        this.comHeight = comHeight;
+    }
+
+    setNewShape(shape){
+        for(var i=0; i<this.shapes.length -1 ;i++){
+            this.shapes[i] = this.shapes[i + 1];
+        }
+        this.shapes[this.shapes.length - 1] = shape;
+
+        this.drawWaitingField();
+    }
+
+    getNextShape(){
+        return this.shapes[0];
+    }
+
+    clearArea(){
+        this.ctx.clearRect(this.startX, this.startY, this.comWidth * this.cols, this.comHeight * this.rows);
+    }
+
+    
 }
 
 
 class PlayContainer{
     constructor(ctx){
-        this.shapeTypeIdx = ["shapeA"];
+        this.self = this;
+        this.numWaiting = 4;
+        this.shapeMaxRows = 3;
+        this.shapeTypeIdx = ["shapeA", "shapeB", "shapeB2", "shapeC", "shapeD", "shapeD2"];
         this.ctx = ctx;
         this.comWidth = 30;
-        this.comHeight = 30;
+        this.comHeight = 30;        
+        this.gameEnd = false;
 
         this.playFieldStartX = 0;
-        this.playFieldStartY = 0;
+        this.playFieldStartY = 0;        
+        
 
         this.InitializePlayField();
         this.InitializeWaitingField();
@@ -364,6 +495,11 @@ class PlayContainer{
 
     start(){
         this.PlayFieldProcess();
+        this.WaitingProcess();
+    }
+
+    WaitingProcess(){
+        this.waitingField.drawWaitingField();
     }
 
     PlayFieldProcess(){
@@ -371,14 +507,26 @@ class PlayContainer{
         
 
         if(this.playField.collisionDetection(controlEnum.down)){ //충돌감지.
-            this.playField.update();
-            this.playField.resetShape(this.createRandomShape());
+            this.CheckGameEnd();
+            
         }else{//충돌 감지 X
             this.playField.sendCMD(controlEnum.down);
         }
 
         this.playField.drawPlayField();
-        setTimeout(function(){game.PlayFieldProcess()}, 1000);
+        if(!this.gameEnd){
+            this.repeat = setTimeout(this.PlayFieldProcess.bind(this), 1000);
+        }
+    }
+
+    CheckGameEnd(){
+        if(this.playField.getEnable()){
+            this.playField.update();
+            this.changeNewShape();            
+        }else{            
+            this.gameEnd = true;
+            alert('게임 끝');
+        }
     }
 
     InitializePlayField(){
@@ -388,61 +536,75 @@ class PlayContainer{
     }
 
     InitializeWaitingField(){
+        var shapes = [];
+        for(var i=0; i<this.numWaiting; i++){
+            shapes.push(this.createRandomShape());
+        }
+        var startX = this.playField.getEndPosX() + this.comWidth;
+        var startY = this.playFieldStartY + this.comHeight;
 
+        this.waitingField = new WaitingField(this.ctx,startX, startY, this.comWidth, this.comHeight, shapes);
+    }
+
+    changeNewShape(){
+        this.playField.resetShape(this.waitingField.getNextShape());
+        this.waitingField.setNewShape(this.createRandomShape());
     }
 
     InputKeyDownConverter(e){
-        if (e.keyCode == '38') {
-            // up arrow
-            
-        }
-        else if (e.keyCode == '40') {
-            // down arrow            
-            this.playField.clearArea();
-
-            if(this.playField.collisionDetection(controlEnum.down)){ //충돌감지.
-                this.playField.update();
-                this.playField.resetShape(this.createRandomShape());
-            }else{//충돌 감지 X
-                this.playField.sendCMD(controlEnum.down);
+        if(!this.gameEnd){
+            if (e.keyCode == '38') {
+                // up arrow
+                
             }
+            else if (e.keyCode == '40') {
+                // down arrow            
+                this.playField.clearArea();
 
-            this.playField.drawPlayField();
-        }
-        else if (e.keyCode == '37') {
-            // left arrow
-            this.playField.clearArea();
-            
-            this.playField.sendCMD(controlEnum.left);
+                if(this.playField.collisionDetection(controlEnum.down)){ //충돌감지.
+                    this.CheckGameEnd();
+                }else{//충돌 감지 X
+                    this.playField.sendCMD(controlEnum.down);
+                }
 
-            this.playField.drawPlayField();
-        }
-        else if (e.keyCode == '39') {
-            // right arrow                
-            this.playField.clearArea();
+                this.playField.drawPlayField();
+            }
+            else if (e.keyCode == '37') {
+                // left arrow
+                this.playField.clearArea();
+                
+                this.playField.sendCMD(controlEnum.left);
 
-            this.playField.sendCMD(controlEnum.right);
+                this.playField.drawPlayField();
+            }
+            else if (e.keyCode == '39') {
+                // right arrow                
+                this.playField.clearArea();
 
-            this.playField.drawPlayField();
+                this.playField.sendCMD(controlEnum.right);
+
+                this.playField.drawPlayField();
+            }
         }
     }
 
     InputKeyUpConverter(e){
-        if (e.keyCode == '38') {
-            this.playField.clearArea();
-            
-            this.playField.sendCMD(controlEnum.rotate);
-            
-            this.playField.drawPlayField();
-        }else if(e.keyCode == '82'){
-            //r
-            this.playField.gotoEnd();
-            this.playField.clearArea();
-            
-            this.playField.update();
-            this.playField.resetShape(this.createRandomShape());
+        if(!this.gameEnd){
+            if (e.keyCode == '38') {
+                this.playField.clearArea();
+                
+                this.playField.sendCMD(controlEnum.rotate);
+                
+                this.playField.drawPlayField();
+            }else if(e.keyCode == '82'){
+                //r
+                this.playField.gotoEnd();
+                this.playField.clearArea();
+                
+                this.CheckGameEnd();
 
-            this.playField.drawPlayField();
+                this.playField.drawPlayField();
+            }
         }
     }
 
@@ -467,18 +629,16 @@ class PlayContainer{
 
         if(shapeType == "shapeA"){                        
             playShape = new ShapeA(color, this.comWidth, this.comHeight);
-        }else if(shapeType == "shapeA2"){
-            playShape = new ShapeA2(color, this.comWidth, this.comHeight);
         }else if(shapeType == "shapeB"){
             playShape = new ShapeB(color, this.comWidth, this.comHeight);
+        }else if(shapeType == "shapeB2"){
+            playShape = new ShapeB2(color, this.comWidth, this.comHeight);
         }else if(shapeType == "shapeC"){
             playShape = new ShapeC(color, this.comWidth, this.comHeight);
         }else if(shapeType == "shapeD2"){
             playShape = new ShapeD2(color, this.comWidth, this.comHeight);
         }else if(shapeType == "shapeD"){
             playShape = new ShapeD(color, this.comWidth, this.comHeight);
-        }else if(shapeType == "shapeE"){
-            playShape = new ShapeE(color, this.comWidth, this.comHeight);
         }
 
         return playShape;

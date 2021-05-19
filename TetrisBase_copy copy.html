@@ -7,7 +7,7 @@
     <title>Document</title>
 </head>
 <body>
-    <h1 id="next"></h1>
+    <button id="start">게임시작</button>
     <script>
         
 
@@ -17,22 +17,28 @@
     <script type="text/javascript" src="test.js"></script>
     <script>
         
-        var canvas = document.getElementById("canvas");
-        ctx = canvas.getContext("2d");
+        function start(){
+            var canvas = document.getElementById("canvas");
+            ctx = canvas.getContext("2d");
+            
+            var game = new PlayContainer(ctx);
+            game.start();
+
+
+            function keyDown(e){
+                game.InputKeyDownConverter(e);
+            }
+            function keyUp(e){
+                game.InputKeyUpConverter(e);
+            }
+            document.addEventListener("keydown", keyDown);
+            document.addEventListener("keyup", keyUp);    
+        }
+
         
-        var game = new PlayContainer(ctx);
-        game.start();
 
-
-        function keyDown(e){
-            game.InputKeyDownConverter(e);
-        }
-        function keyUp(e){
-            game.InputKeyUpConverter(e);
-        }
-        document.addEventListener("keydown", keyDown);
-        document.addEventListener("keyup", keyUp);
-
+        var btn = document.getElementById("start");
+        btn.addEventListener("click", start);
         // game.update();
         
         
